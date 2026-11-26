@@ -525,7 +525,7 @@
         </div>
         <div class="field">
           <label for="paletteName">Palette name</label>
-          <input id="paletteName" name="paletteName" type="text" placeholder="Sunset Over Santorini" required />
+          <input id="paletteName" name="paletteName" type="text" placeholder="Auto-filled from SVG prompt" required />
         </div>
         <div>
           <button type="submit" class="btn btn-primary" id="submitPaletteBtn">Submit palette</button>
@@ -586,12 +586,12 @@
     };
 
     const INITIAL_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 450" width="1000" height="450" role="img" aria-label="Sunset Over Santorini">
-  <metadata id="prompt-text" class="svg-prompt" data-prompt="sunset over santorini">sunset over santorini</metadata>
-  <rect x="0" y="0" width="200" height="400" fill="#17388C"/>
-  <rect x="200" y="0" width="200" height="400" fill="#377DF0"/>
-  <rect x="400" y="0" width="200" height="400" fill="#F7F7F7"/>
-  <rect x="600" y="0" width="200" height="400" fill="#EC6707"/>
-  <rect x="800" y="0" width="200" height="400" fill="#C4142E"/>
+  <metadata id="palette-prompt-text" data-prompt="sunset over santorini">sunset over santorini</metadata>
+  <rect class="palette-swatch-box" x="0" y="0" width="200" height="400" fill="#17388C"/>
+  <rect class="palette-swatch-box" x="200" y="0" width="200" height="400" fill="#377DF0"/>
+  <rect class="palette-swatch-box" x="400" y="0" width="200" height="400" fill="#F7F7F7"/>
+  <rect class="palette-swatch-box" x="600" y="0" width="200" height="400" fill="#EC6707"/>
+  <rect class="palette-swatch-box" x="800" y="0" width="200" height="400" fill="#C4142E"/>
   <rect x="0" y="400" width="1000" height="50" fill="#FFFFFF"/>
 </svg>`;
 
@@ -684,48 +684,100 @@
       return { svg, ok: Boolean(svg) && !invalid };
     }
 
+    function normalizeHex(raw) {
+      if (!raw) return "";
+      const match = raw.trim().match(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/);
+      if (!match) return "";
+      let hex = match[1].toUpperCase();
+      if (hex.length === 3) {
+        hex = hex.split("").map((c) => c + c).join("");
+      } else if (hex.length === 8) {
+        hex = hex.slice(0, 6);
+      }
+      return `#${hex}`;
+    }
+
+    function getElementFillHex(el) {
+      const attrFill = normalizeHex(el.getAttribute("fill"));
+      if (attrFill) return attrFill;
+      const style = el.getAttribute("style") || "";
+      const styleMatch = style.match(/(?:^|;)\s*fill\s*:\s*(#[0-9a-fA-F]{3,8})/i);
+      return styleMatch ? normalizeHex(styleMatch[1]) : "";
+    }
+
+    /**
+     * Reads prompt text directly from #palette-prompt-text (with fallback to #prompt / .prompt).
+     */
     function fishOutPrompt(svgMarkup) {
       const { svg, ok } = parseSvg(svgMarkup);
       if (!ok || !svg) return "";
 
-      const selectors = [
-        "#prompt",
-        ".prompt",
-        "#prompt-text",
-        ".prompt-text",
-        "[data-prompt]",
-      ];
-      const direct = svg.querySelector(selectors.join(","));
-      const matched = direct
-        ? [direct]
-        : Array.from(svg.querySelectorAll("*")).filter((node) => {
-            const id = (node.getAttribute("id") || "").toLowerCase();
-            const cls = (node.getAttribute("class") || "").toLowerCase();
-            return id.includes("prompt") || cls.includes("prompt");
-          });
-
-      for (const el of matched) {
-        const attrVal = (el.getAttribute("data-prompt") || "").trim();
+      const primary = svg.querySelector("#palette-prompt-text");
+      if (primary) {
+        const attrVal = (primary.getAttribute("data-prompt") || "").trim();
         if (attrVal) return attrVal;
-        const textVal = (el.textContent || "").trim();
+        const textVal = (primary.textContent || "").trim();
         if (textVal) return textVal;
       }
 
-      return (svg.getAttribute("data-prompt") || "").trim();
+      const fallback = svg.querySelector("#prompt, .prompt, #prompt-text, .prompt-text, [data-prompt]");
+      if (fallback) {
+        const attrVal = (fallback.getAttribute("data-prompt") || "").trim();
+        if (attrVal) return attrVal;
+        const textVal = (fallback.textContent || "").trim();
+        if (textVal) return textVal;
+      }
+
+      return "";
     }
 
+    /**
+     * Reads swatch hex colors directly from elements with class="palette-swatch-box".
+     * Falls back to non-background shapes only if no .palette-swatch-box elements exist.
+     */
     function extractHexLines(svgMarkup) {
-      const found = svgMarkup.match(/#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?(?:[0-9a-fA-F]{2})?\b/g) || [];
+      const { svg, ok } = parseSvg(svgMarkup);
+      if (!ok || !svg) return "";
+
+      const swatchBoxes = Array.from(svg.querySelectorAll(".palette-swatch-box"));
+      if (swatchBoxes.length > 0) {
+        const lines = [];
+        for (const box of swatchBoxes) {
+          const hex = normalizeHex(box.getAttribute("data-hex")) || getElementFillHex(box);
+          if (hex) lines.push(hex);
+        }
+        return lines.join("\n");
+      }
+
+      // Fallback for legacy SVGs without .palette-swatch-box
+      const shapes = Array.from(svg.querySelectorAll("rect, circle, polygon, path")).filter(
+        (el) => !el.closest("defs, clipPath, mask, pattern, marker")
+      );
       const seen = new Set();
       const lines = [];
-      for (const hex of found) {
-        const clean = hex.toUpperCase();
-        if (!seen.has(clean)) {
-          seen.add(clean);
-          lines.push(clean);
+      for (const el of shapes) {
+        const hex = getElementFillHex(el);
+        if (hex && !seen.has(hex)) {
+          seen.add(hex);
+          lines.push(hex);
         }
       }
       return lines.join("\n");
+    }
+
+    function formatDisplayTitle(rawText) {
+      const cleaned = (rawText || "").trim().replace(/\s+/g, " ");
+      if (!cleaned) return "";
+      return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+    }
+
+    function titleFromFilename(filename) {
+      const stem = (filename || "")
+        .replace(/\.svg$/i, "")
+        .replace(/[-_]+palette$/i, "")
+        .replace(/[-_]+/g, " ")
+        .trim();
+      return formatDisplayTitle(stem);
     }
 
     function toSlugFilename(name) {
@@ -967,7 +1019,7 @@
       if (!hasPatInMemory()) {
         ui.ghPatInput.focus();
       } else {
-        ui.paletteName.focus();
+        ui.svgFile.focus();
       }
     }
 
@@ -987,7 +1039,6 @@
       ui.swatchModalTitle.textContent = item.name;
       ui.swatchModalStatus.textContent = "";
 
-      // Show Delete button strictly when PAT exists in browser memory
       const canDelete = hasPatInMemory();
       ui.modalDeleteBtn.hidden = !canDelete;
       ui.modalDeleteBtn.disabled = false;
@@ -998,7 +1049,7 @@
       const hexLines = extractHexLines(item.svg);
       const count = hexLines ? hexLines.split("\n").length : 0;
       const prompt = fishOutPrompt(item.svg);
-      const details = [`${count} hex ${count === 1 ? "color" : "colors"}`];
+      const details = [`${count} ${count === 1 ? "color" : "colors"}`];
       if (prompt) details.push(`Prompt: ${prompt}`);
       ui.swatchModalMeta.textContent = details.join(" · ");
 
@@ -1049,6 +1100,32 @@
       forgetPatFromMemory();
       ui.adminStatus.textContent = "PAT removed from browser memory.";
       ui.ghPatInput.focus();
+    });
+
+    /* Auto-populate palette name from #palette-prompt-text when an SVG file is selected */
+    ui.svgFile.addEventListener("change", async () => {
+      ui.adminStatus.textContent = "";
+      const file = ui.svgFile.files && ui.svgFile.files[0];
+      if (!file) return;
+
+      const content = await file.text();
+      const { ok } = parseSvg(content);
+      if (!ok) {
+        ui.adminStatus.textContent = "Selected file is not valid SVG markup.";
+        return;
+      }
+
+      const prompt = fishOutPrompt(content);
+      const hexLines = extractHexLines(content);
+      const count = hexLines ? hexLines.split("\n").length : 0;
+
+      if (prompt) {
+        ui.paletteName.value = formatDisplayTitle(prompt);
+      } else {
+        ui.paletteName.value = titleFromFilename(file.name);
+      }
+
+      ui.adminStatus.textContent = `Detected ${count} ${count === 1 ? "color" : "colors"}${prompt ? ` · Prompt: "${prompt}"` : ""}.`;
     });
 
     ui.paletteUploadForm.addEventListener("submit", async (event) => {
@@ -1179,7 +1256,7 @@
       if (!item) return;
       const prompt = fishOutPrompt(item.svg);
       if (!prompt) {
-        ui.swatchModalStatus.textContent = "No prompt class or ID found in SVG.";
+        ui.swatchModalStatus.textContent = "No #palette-prompt-text found in SVG.";
         return;
       }
       const ok = await copyToClipboard(prompt);
