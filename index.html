@@ -738,17 +738,19 @@
     }
 
     async function loadPalettesFromRepo() {
+      const rawUrl = `https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/${GITHUB_CONFIG.branch}/${GITHUB_CONFIG.dataPath}?t=${Date.now()}`;
       try {
-        const res = await fetch(`./${GITHUB_CONFIG.dataPath}?t=${Date.now()}`, { cache: "no-store" });
-        if (!res.ok) throw new Error("No palettes.json yet");
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          appState.items = data;
-          renderStrips();
-          return;
+        const res = await fetch(rawUrl, { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            appState.items = data;
+            renderStrips();
+            return;
+          }
         }
       } catch (_) {
-        // Use starter swatch until first palette is committed
+        // Fall back to local/starter items if offline or not yet created
       }
       appState.items = [...FALLBACK_ITEMS];
       renderStrips();
@@ -763,9 +765,14 @@
       };
 
       let existingSha = null;
-      let existingList = [...appState.items];
+      let existingList = [];
 
-      const getRes = await fetch(`${apiUrl}?ref=${encodeURIComponent(GITHUB_CONFIG.branch)}`, { headers });
+      // Cache-bust the GET so GitHub always returns the latest file SHA
+      const getRes = await fetch(
+        `${apiUrl}?ref=${encodeURIComponent(GITHUB_CONFIG.branch)}&t=${Date.now()}`,
+        { headers, cache: "no-store" }
+      );
+
       if (getRes.ok) {
         const fileData = await getRes.json();
         existingSha = fileData.sha;
@@ -773,9 +780,11 @@
           const parsed = JSON.parse(decodeUtf8Base64(fileData.content));
           if (Array.isArray(parsed)) existingList = parsed;
         } catch (_) {
-          // Keep current list if existing JSON is empty
+          existingList = [];
         }
-      } else if (getRes.status !== 404) {
+      } else if (getRes.status === 404) {
+        existingList = [...FALLBACK_ITEMS];
+      } else {
         const errBody = await getRes.json().catch(() => ({}));
         throw new Error(errBody.message || `GitHub API error (${getRes.status})`);
       }
