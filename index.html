@@ -33,7 +33,6 @@
       box-sizing: border-box;
     }
 
-    /* Guarantee [hidden] always overrides component display rules */
     [hidden] {
       display: none !important;
     }
@@ -607,6 +606,7 @@
     const appState = {
       items: [],
       selectedId: null,
+      isMutating: false,
     };
 
     const ui = {
@@ -678,7 +678,7 @@
 
     function parseSvg(svgMarkup) {
       const parser = new DOMParser();
-      const doc = parser.parseFromString(svgMarkup, "image/svg+xml");
+      const doc = parser.parseFromString(String(svgMarkup || ""), "image/svg+xml");
       const svg = doc.querySelector("svg");
       const invalid = doc.querySelector("parsererror") !== null;
       return { svg, ok: Boolean(svg) && !invalid };
@@ -705,9 +705,6 @@
       return styleMatch ? normalizeHex(styleMatch[1]) : "";
     }
 
-    /**
-     * Reads prompt text directly from #palette-prompt-text (with fallback to #prompt / .prompt).
-     */
     function fishOutPrompt(svgMarkup) {
       const { svg, ok } = parseSvg(svgMarkup);
       if (!ok || !svg) return "";
@@ -731,14 +728,11 @@
       return "";
     }
 
-    /**
-     * Reads swatch hex colors directly from elements with class="palette-swatch-box".
-     * Falls back to non-background shapes only if no .palette-swatch-box elements exist.
-     */
     function extractHexLines(svgMarkup) {
       const { svg, ok } = parseSvg(svgMarkup);
       if (!ok || !svg) return "";
 
+      // 1. Primary: query exact .palette-swatch-box elements
       const swatchBoxes = Array.from(svg.querySelectorAll(".palette-swatch-box"));
       if (swatchBoxes.length > 0) {
         const lines = [];
@@ -749,7 +743,11 @@
         return lines.join("\n");
       }
 
-      // Fallback for legacy SVGs without .palette-swatch-box
+      // 2. Fallback: inspect shapes while excluding full-width background/footer strips
+      const vb = (svg.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number);
+      const vbWidth = vb.length === 4 && vb[2] > 0 ? vb[2] : Number(svg.getAttribute("width")) || 0;
+      const vbHeight = vb.length === 4 && vb[3] > 0 ? vb[3] : Number(svg.getAttribute("height")) || 0;
+
       const shapes = Array.from(svg.querySelectorAll("rect, circle, polygon, path")).filter(
         (el) => !el.closest("defs, clipPath, mask, pattern, marker")
       );
@@ -757,7 +755,14 @@
       const lines = [];
       for (const el of shapes) {
         const hex = getElementFillHex(el);
-        if (hex && !seen.has(hex)) {
+        if (!hex) continue;
+        if (el.tagName.toLowerCase() === "rect" && vbWidth > 0 && vbHeight > 0) {
+          const w = Number(el.getAttribute("width")) || 0;
+          const h = Number(el.getAttribute("height")) || 0;
+          const isFullWidth = w >= vbWidth * 0.95;
+          if (isFullWidth && (h >= vbHeight * 0.95 || h <= vbHeight * 0.22)) continue;
+        }
+        if (!seen.has(hex)) {
           seen.add(hex);
           lines.push(hex);
         }
@@ -806,23 +811,43 @@
       return new TextDecoder().decode(bytes);
     }
 
+    /**
+     * Fetches palettes.json directly from the GitHub Contents API (zero CDN lag, no stale cache).
+     */
     async function loadPalettesFromRepo() {
-      const rawUrl = `https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/${GITHUB_CONFIG.branch}/${GITHUB_CONFIG.dataPath}?t=${Date.now()}`;
+      if (appState.isMutating) return;
+
+      const apiUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.dataPath}?ref=${encodeURIComponent(GITHUB_CONFIG.branch)}&t=${Date.now()}`;
+      const headers = {
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      };
+      const token = getSavedPat();
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
       try {
-        const res = await fetch(rawUrl, { cache: "no-store" });
+        const res = await fetch(apiUrl, { headers, cache: "no-store" });
+        if (appState.isMutating) return;
+
         if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data)) {
-            appState.items = data;
+          const fileData = await res.json();
+          const parsed = JSON.parse(decodeUtf8Base64(fileData.content));
+          if (Array.isArray(parsed)) {
+            appState.items = parsed;
             renderStrips();
             return;
           }
         }
       } catch (_) {
-        // Fall back to starter swatch if offline or not yet created
+        // Fall back if offline or palettes.json not created yet
       }
-      appState.items = [...FALLBACK_ITEMS];
-      renderStrips();
+
+      if (!appState.isMutating) {
+        appState.items = [...FALLBACK_ITEMS];
+        renderStrips();
+      }
     }
 
     async function updatePalettesOnGitHub(mutateList, commitMessage, token) {
@@ -1102,7 +1127,6 @@
       ui.ghPatInput.focus();
     });
 
-    /* Auto-populate palette name from #palette-prompt-text when an SVG file is selected */
     ui.svgFile.addEventListener("change", async () => {
       ui.adminStatus.textContent = "";
       const file = ui.svgFile.files && ui.svgFile.files[0];
@@ -1168,6 +1192,7 @@
         svg: content,
       };
 
+      appState.isMutating = true;
       ui.submitPaletteBtn.disabled = true;
       ui.adminStatus.textContent = "Committing to GitHub...";
 
@@ -1184,6 +1209,7 @@
       } catch (err) {
         ui.adminStatus.textContent = `GitHub error: ${err.message}`;
       } finally {
+        appState.isMutating = false;
         ui.submitPaletteBtn.disabled = false;
       }
     });
@@ -1278,6 +1304,7 @@
         return;
       }
 
+      appState.isMutating = true;
       ui.modalDeleteBtn.disabled = true;
       ui.swatchModalStatus.textContent = "Deleting from GitHub...";
 
@@ -1294,6 +1321,8 @@
         ui.swatchModalStatus.textContent = `Delete failed: ${err.message}`;
         ui.modalDeleteBtn.disabled = false;
         ui.modalDeleteBtn.textContent = "Delete";
+      } finally {
+        appState.isMutating = false;
       }
     });
 
