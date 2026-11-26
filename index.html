@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pigmentary</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --canvas: #e6e8ec;
+      --surface: #ffffff;
+      --ink: #111318;
+      --muted: #5b616e;
+      --accent: #254edb;
+      --accent-hover: #1b3cb0;
+      --line: #d5d9e2;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --font-display: "Bricolage Grotesque", sans-serif;
+      --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--canvas);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 28px 24px 64px;
+    }
+
+    /* Minimal Top Bar */
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .brand-name {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(1.75rem, 3vw, 2.25rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.05;
+      color: var(--ink);
+    }
+
+    .brand-desc {
+      margin: 0;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .nav-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 13px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background-color: var(--surface);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+      font-weight: 500;
+      line-height: 1.2;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color 130ms ease, border-color 130ms ease;
+    }
+
+    .btn:hover {
+      background-color: #f4f6fa;
+      border-color: #b8c0d0;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--accent-hover);
+      border-color: var(--accent-hover);
+      color: #ffffff;
+    }
+
+    .btn-compact {
+      padding: 5px 9px;
+      font-size: 0.78rem;
+    }
+
+    .link-btn {
+      border: 0;
+      background: none;
+      padding: 0;
+      font: inherit;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+    }
+
+    .link-btn:hover {
+      color: var(--ink);
+    }
+
+    /* About Menu */
+    .about-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      min-width: 164px;
+      padding: 6px;
+      background-color: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 10px 26px rgba(17, 19, 24, 0.12);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .about-menu[hidden] {
+      display: none;
+    }
+
+    .about-item {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding: 8px 10px;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+      font-weight: 500;
+      text-align: left;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .about-item:hover {
+      background-color: #f1f4f9;
+      color: var(--accent);
+    }
+
+    /* Upload Drawer */
+    .upload-drawer {
+      margin-top: 18px;
+      padding: 16px 18px;
+      background-color: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+    }
+
+    .upload-drawer[hidden] {
+      display: none;
+    }
+
+    .upload-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field[hidden] {
+      display: none;
+    }
+
+    .field label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .field input[type="text"],
+    .field input[type="password"],
+    .field input[type="file"] {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background-color: #fafbfd;
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+    }
+
+    .field input[type="file"] {
+      padding: 6px 8px;
+    }
+
+    .upload-footer {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 1.3em;
+    }
+
+    .upload-status {
+      margin: 0;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    /* 2-Column Scroll Strip Feed */
+    .feed-section {
+      margin-top: 22px;
+    }
+
+    .strip-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .strip-card {
+      background-color: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .strip-viewport {
+      width: 100%;
+      height: 132px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      background-color: #f4f6fa;
+      border-bottom: 1px solid var(--line);
+      cursor: pointer;
+    }
+
+    .strip-viewport svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-width: 100%;
+    }
+
+    .strip-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 14px;
+    }
+
+    .strip-title-btn {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      font-family: var(--font-display);
+      font-size: 1.02rem;
+      font-weight: 600;
+      color: var(--ink);
+      text-align: left;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .strip-title-btn:hover {
+      color: var(--accent);
+    }
+
+    .strip-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .empty-box {
+      grid-column: 1 / -1;
+      padding: 36px 20px;
+      background-color: var(--surface);
+      border: 1px dashed var(--line);
+      border-radius: var(--radius-md);
+      color: var(--muted);
+    }
+
+    /* Dialogs */
+    dialog.modal {
+      width: min(700px, calc(100vw - 28px));
+      max-width: none;
+      margin: auto;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background-color: var(--surface);
+      color: var(--ink);
+      box-shadow: 0 24px 60px rgba(17, 19, 24, 0.2);
+    }
+
+    dialog.modal::backdrop {
+      background-color: rgba(17, 19, 24, 0.45);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .modal-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    .modal-preview {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      background-color: #f8f9fb;
+      overflow-x: auto;
+      min-height: 170px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-preview svg {
+      max-width: 100%;
+      max-height: 260px;
+      height: auto;
+      display: block;
+    }
+
+    .modal-meta {
+      margin: 12px 0 0;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .modal-actions {
+      margin-top: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-status {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+
+    .info-body {
+      margin: 0 0 10px;
+      color: var(--ink);
+      line-height: 1.55;
+    }
+
+    .info-link {
+      color: var(--accent);
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    @media (max-width: 860px) {
+      .strip-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .upload-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 580px) {
+      .strip-bar {
+        flex-wrap: wrap;
+      }
+
+      .strip-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div class="brand-group">
+        <h1 class="brand-name">Pigmentary</h1>
+        <p class="brand-desc">AI-generated SVG color strips—inspect, download, and copy hex lines or prompts.</p>
+      </div>
+
+      <div class="nav-controls">
+        <a
+          class="btn btn-primary"
+          href="https://share.gemini.google/h0fmiHOGVHBW"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Generate your own
+        </a>
+        <button type="button" class="btn" id="toggleUploadBtn" aria-expanded="false" aria-controls="uploadDrawer">
+          Add SVG
+        </button>
+        <button type="button" class="btn" id="aboutBtn" aria-expanded="false" aria-controls="aboutMenu">
+          About
+        </button>
+
+        <div class="about-menu" id="aboutMenu" role="menu" hidden>
+          <button type="button" class="about-item" id="openProjectInfoBtn" role="menuitem">Project</button>
+          <a
+            class="about-item"
+            href="https://github.com/saurabhgayali"
+            target="_blank"
+            rel="noopener noreferrer"
+            role="menuitem"
+          >
+            Developer
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <section class="upload-drawer" id="uploadDrawer" aria-label="Upload SVG palette" hidden>
+      <form id="uploadForm" autocomplete="on" novalidate>
+        <div class="upload-row">
+          <div class="field" id="patField">
+            <label for="ghPatInput">GitHub Personal Access Token</label>
+            <input
+              id="ghPatInput"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              placeholder="github_pat_..."
+            />
+          </div>
+          <div class="field">
+            <label for="svgFile">SVG file</label>
+            <input id="svgFile" name="svgFile" type="file" accept=".svg,image/svg+xml" required />
+          </div>
+          <div class="field">
+            <label for="paletteName">Palette name</label>
+            <input id="paletteName" name="paletteName" type="text" placeholder="Sunset Over Santorini" required />
+          </div>
+          <button type="submit" class="btn btn-primary" id="submitUploadBtn">Add to list</button>
+        </div>
+        <div class="upload-footer">
+          <p class="upload-status" id="uploadStatus" role="status" aria-live="polite"></p>
+          <button type="button" class="link-btn" id="clearPatBtn" hidden>Clear saved token</button>
+        </div>
+      </form>
+    </section>
+
+    <main class="feed-section" aria-label="SVG color strip list">
+      <div class="strip-grid" id="stripGrid"></div>
+    </main>
+  </div>
+
+  <!-- Swatch Popup Modal -->
+  <dialog class="modal" id="swatchModal" aria-labelledby="swatchModalTitle">
+    <div class="modal-head">
+      <h2 class="modal-title" id="swatchModalTitle">Swatch</h2>
+      <button type="button" class="btn btn-compact" id="closeSwatchModalBtn">Close</button>
+    </div>
+    <div class="modal-preview" id="swatchModalPreview"></div>
+    <p class="modal-meta" id="swatchModalMeta"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary btn-compact" id="modalDownloadBtn">Download SVG</button>
+      <button type="button" class="btn btn-compact" id="modalCopyHexesBtn">Copy hexes</button>
+      <button type="button" class="btn btn-compact" id="modalCopyPromptBtn">Copy prompt</button>
+      <span class="modal-status" id="swatchModalStatus" role="status" aria-live="polite"></span>
+    </div>
+  </dialog>
+
+  <!-- Project Info Popup Modal -->
+  <dialog class="modal" id="projectModal" aria-labelledby="projectModalTitle">
+    <div class="modal-head">
+      <h2 class="modal-title" id="projectModalTitle">About Pigmentary</h2>
+      <button type="button" class="btn btn-compact" id="closeProjectModalBtn">Close</button>
+    </div>
+    <p class="info-body">
+      Pigmentary collects AI-generated SVG color palettes into a side-by-side strip stream so you can preview color balance fast, grab raw vector files, copy hex codes one line per color, and extract prompt text embedded inside SVG classes or IDs.
+    </p>
+    <p class="info-body">
+      Create new palettes in the
+      <a
+        class="info-link"
+        href="https://share.gemini.google/h0fmiHOGVHBW"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Gemini palette app
+      </a>
+      , download the SVG, and upload it here.
+    </p>
+  </dialog>
+
+  <script>
+    // Set REPO_NAME to match your GitHub repository name before uploading index.html
+    const GITHUB_CONFIG = {
+      owner: "saurabhgayali",
+      repo: "pigmentary",
+      branch: "main",
+      dataPath: "palettes.json",
+      storageKey: "pigmentary_gh_pat",
+    };
+
+    const INITIAL_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 450" width="1000" height="450" role="img" aria-label="Sunset Over Santorini">
+  <metadata id="prompt-text" class="svg-prompt" data-prompt="sunset over santorini">sunset over santorini</metadata>
+  <rect x="0" y="0" width="200" height="400" fill="#17388C"/>
+  <rect x="200" y="0" width="200" height="400" fill="#377DF0"/>
+  <rect x="400" y="0" width="200" height="400" fill="#F7F7F7"/>
+  <rect x="600" y="0" width="200" height="400" fill="#EC6707"/>
+  <rect x="800" y="0" width="200" height="400" fill="#C4142E"/>
+  <rect x="0" y="400" width="1000" height="50" fill="#FFFFFF"/>
+</svg>`;
+
+    const FALLBACK_ITEMS = [
+      {
+        id: "sunset-over-santorini",
+        name: "Sunset Over Santorini",
+        filename: "sunset-over-santorini-palette.svg",
+        svg: INITIAL_SVG,
+      },
+    ];
+
+    const appState = {
+      items: [],
+      selectedId: null,
+    };
+
+    const ui = {
+      toggleUploadBtn: document.getElementById("toggleUploadBtn"),
+      uploadDrawer: document.getElementById("uploadDrawer"),
+      uploadForm: document.getElementById("uploadForm"),
+      patField: document.getElementById("patField"),
+      ghPatInput: document.getElementById("ghPatInput"),
+      clearPatBtn: document.getElementById("clearPatBtn"),
+      svgFile: document.getElementById("svgFile"),
+      paletteName: document.getElementById("paletteName"),
+      submitUploadBtn: document.getElementById("submitUploadBtn"),
+      uploadStatus: document.getElementById("uploadStatus"),
+      aboutBtn: document.getElementById("aboutBtn"),
+      aboutMenu: document.getElementById("aboutMenu"),
+      openProjectInfoBtn: document.getElementById("openProjectInfoBtn"),
+      stripGrid: document.getElementById("stripGrid"),
+      swatchModal: document.getElementById("swatchModal"),
+      swatchModalTitle: document.getElementById("swatchModalTitle"),
+      swatchModalPreview: document.getElementById("swatchModalPreview"),
+      swatchModalMeta: document.getElementById("swatchModalMeta"),
+      swatchModalStatus: document.getElementById("swatchModalStatus"),
+      closeSwatchModalBtn: document.getElementById("closeSwatchModalBtn"),
+      modalDownloadBtn: document.getElementById("modalDownloadBtn"),
+      modalCopyHexesBtn: document.getElementById("modalCopyHexesBtn"),
+      modalCopyPromptBtn: document.getElementById("modalCopyPromptBtn"),
+      projectModal: document.getElementById("projectModal"),
+      closeProjectModalBtn: document.getElementById("closeProjectModalBtn"),
+    };
+
+    function getSavedPat() {
+      return (localStorage.getItem(GITHUB_CONFIG.storageKey) || "").trim();
+    }
+
+    function savePat(token) {
+      localStorage.setItem(GITHUB_CONFIG.storageKey, token.trim());
+      syncPatVisibility();
+    }
+
+    function clearPat() {
+      localStorage.removeItem(GITHUB_CONFIG.storageKey);
+      ui.ghPatInput.value = "";
+      syncPatVisibility();
+    }
+
+    function syncPatVisibility() {
+      const hasToken = Boolean(getSavedPat());
+      ui.patField.hidden = hasToken;
+      ui.clearPatBtn.hidden = !hasToken;
+    }
+
+    function parseSvg(svgMarkup) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(svgMarkup, "image/svg+xml");
+      const svg = doc.querySelector("svg");
+      const invalid = doc.querySelector("parsererror") !== null;
+      return { svg, ok: Boolean(svg) && !invalid };
+    }
+
+    function fishOutPrompt(svgMarkup) {
+      const { svg, ok } = parseSvg(svgMarkup);
+      if (!ok || !svg) return "";
+
+      const selectors = [
+        "#prompt",
+        ".prompt",
+        "#prompt-text",
+        ".prompt-text",
+        "[data-prompt]",
+      ];
+      const direct = svg.querySelector(selectors.join(","));
+      const matched = direct
+        ? [direct]
+        : Array.from(svg.querySelectorAll("*")).filter((node) => {
+            const id = (node.getAttribute("id") || "").toLowerCase();
+            const cls = (node.getAttribute("class") || "").toLowerCase();
+            return id.includes("prompt") || cls.includes("prompt");
+          });
+
+      for (const el of matched) {
+        const attrVal = (el.getAttribute("data-prompt") || "").trim();
+        if (attrVal) return attrVal;
+        const textVal = (el.textContent || "").trim();
+        if (textVal) return textVal;
+      }
+
+      return (svg.getAttribute("data-prompt") || "").trim();
+    }
+
+    function extractHexLines(svgMarkup) {
+      const found = svgMarkup.match(/#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?(?:[0-9a-fA-F]{2})?\b/g) || [];
+      const seen = new Set();
+      const lines = [];
+      for (const hex of found) {
+        const clean = hex.toUpperCase();
+        if (!seen.has(clean)) {
+          seen.add(clean);
+          lines.push(clean);
+        }
+      }
+      return lines.join("\n");
+    }
+
+    function toSlugFilename(name) {
+      const slug = (name || "swatch")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      return `${slug || "swatch"}.svg`;
+    }
+
+    function encodeUtf8Base64(text) {
+      const bytes = new TextEncoder().encode(text);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i += 1) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    }
+
+    function decodeUtf8Base64(base64) {
+      const binary = atob(base64.replace(/\s+/g, ""));
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return new TextDecoder().decode(bytes);
+    }
+
+    async function loadPalettesFromRepo() {
+      try {
+        const res = await fetch(`./${GITHUB_CONFIG.dataPath}?t=${Date.now()}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("No palettes.json yet");
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          appState.items = data;
+          renderStrips();
+          return;
+        }
+      } catch (_) {
+        // Use starter swatch until first palette is committed
+      }
+      appState.items = [...FALLBACK_ITEMS];
+      renderStrips();
+    }
+
+    async function commitPaletteToGitHub(newItem, token) {
+      const apiUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.dataPath}`;
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      };
+
+      let existingSha = null;
+      let existingList = [...appState.items];
+
+      const getRes = await fetch(`${apiUrl}?ref=${encodeURIComponent(GITHUB_CONFIG.branch)}`, { headers });
+      if (getRes.ok) {
+        const fileData = await getRes.json();
+        existingSha = fileData.sha;
+        try {
+          const parsed = JSON.parse(decodeUtf8Base64(fileData.content));
+          if (Array.isArray(parsed)) existingList = parsed;
+        } catch (_) {
+          // Keep current list if existing JSON is empty
+        }
+      } else if (getRes.status !== 404) {
+        const errBody = await getRes.json().catch(() => ({}));
+        throw new Error(errBody.message || `GitHub API error (${getRes.status})`);
+      }
+
+      const updatedList = [newItem, ...existingList];
+      const payload = {
+        message: `Add palette: ${newItem.name}`,
+        content: encodeUtf8Base64(JSON.stringify(updatedList, null, 2)),
+        branch: GITHUB_CONFIG.branch,
+      };
+      if (existingSha) {
+        payload.sha = existingSha;
+      }
+
+      const putRes = await fetch(apiUrl, {
+        method: "PUT",
+        headers: {
+          ...headers,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!putRes.ok) {
+        const errBody = await putRes.json().catch(() => ({}));
+        throw new Error(errBody.message || `Commit failed (${putRes.status})`);
+      }
+
+      return updatedList;
+    }
+
+    async function copyToClipboard(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+      const area = document.createElement("textarea");
+      area.value = text;
+      area.setAttribute("readonly", "");
+      area.style.position = "fixed";
+      area.style.left = "-9999px";
+      document.body.appendChild(area);
+      area.select();
+      const success = document.execCommand("copy");
+      document.body.removeChild(area);
+      return success;
+    }
+
+    function triggerDownload(item) {
+      const blob = new Blob([item.svg], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = item.filename || toSlugFilename(item.name);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function renderSvgInto(target, svgMarkup) {
+      target.innerHTML = "";
+      const { svg, ok } = parseSvg(svgMarkup);
+      if (!ok || !svg) {
+        target.textContent = "Invalid SVG";
+        return;
+      }
+      const cloned = document.importNode(svg, true);
+      cloned.removeAttribute("width");
+      cloned.removeAttribute("height");
+      cloned.setAttribute("preserveAspectRatio", "none");
+      target.appendChild(cloned);
+    }
+
+    function flashLabel(btn, nextText, fallbackText) {
+      btn.textContent = nextText;
+      setTimeout(() => {
+        btn.textContent = fallbackText;
+      }, 1400);
+    }
+
+    function renderStrips() {
+      ui.stripGrid.innerHTML = "";
+
+      if (appState.items.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty-box";
+        empty.textContent = "No SVGs added yet. Click Add SVG above to upload your first palette.";
+        ui.stripGrid.appendChild(empty);
+        return;
+      }
+
+      for (const item of appState.items) {
+        const card = document.createElement("article");
+        card.className = "strip-card";
+
+        const viewport = document.createElement("div");
+        viewport.className = "strip-viewport";
+        viewport.title = `Open ${item.name}`;
+        renderSvgInto(viewport, item.svg);
+        viewport.addEventListener("click", () => openSwatchModal(item.id));
+
+        const bar = document.createElement("div");
+        bar.className = "strip-bar";
+
+        const titleBtn = document.createElement("button");
+        titleBtn.type = "button";
+        titleBtn.className = "strip-title-btn";
+        titleBtn.textContent = item.name;
+        titleBtn.addEventListener("click", () => openSwatchModal(item.id));
+
+        const actions = document.createElement("div");
+        actions.className = "strip-actions";
+
+        const dlBtn = document.createElement("button");
+        dlBtn.type = "button";
+        dlBtn.className = "btn btn-compact";
+        dlBtn.textContent = "Download SVG";
+        dlBtn.addEventListener("click", () => triggerDownload(item));
+
+        const hexBtn = document.createElement("button");
+        hexBtn.type = "button";
+        hexBtn.className = "btn btn-compact";
+        hexBtn.textContent = "Copy hexes";
+        hexBtn.addEventListener("click", async () => {
+          const hexText = extractHexLines(item.svg);
+          if (!hexText) {
+            flashLabel(hexBtn, "No hexes", "Copy hexes");
+            return;
+          }
+          const ok = await copyToClipboard(hexText);
+          flashLabel(hexBtn, ok ? "Copied" : "Failed", "Copy hexes");
+        });
+
+        const promptBtn = document.createElement("button");
+        promptBtn.type = "button";
+        promptBtn.className = "btn btn-compact";
+        promptBtn.textContent = "Copy prompt";
+        promptBtn.addEventListener("click", async () => {
+          const prompt = fishOutPrompt(item.svg);
+          if (!prompt) {
+            flashLabel(promptBtn, "No prompt", "Copy prompt");
+            return;
+          }
+          const ok = await copyToClipboard(prompt);
+          flashLabel(promptBtn, ok ? "Copied" : "Failed", "Copy prompt");
+        });
+
+        actions.append(dlBtn, hexBtn, promptBtn);
+        bar.append(titleBtn, actions);
+        card.append(viewport, bar);
+        ui.stripGrid.appendChild(card);
+      }
+    }
+
+    function openSwatchModal(id) {
+      const item = appState.items.find((entry) => entry.id === id);
+      if (!item) return;
+
+      appState.selectedId = item.id;
+      ui.swatchModalTitle.textContent = item.name;
+      ui.swatchModalStatus.textContent = "";
+      renderSvgInto(ui.swatchModalPreview, item.svg);
+
+      const hexLines = extractHexLines(item.svg);
+      const count = hexLines ? hexLines.split("\n").length : 0;
+      const prompt = fishOutPrompt(item.svg);
+      const details = [`${count} hex ${count === 1 ? "color" : "colors"}`];
+      if (prompt) details.push(`Prompt: ${prompt}`);
+      ui.swatchModalMeta.textContent = details.join(" · ");
+
+      if (typeof ui.swatchModal.showModal === "function") {
+        ui.swatchModal.showModal();
+      } else {
+        ui.swatchModal.setAttribute("open", "");
+      }
+    }
+
+    function closeSwatchModal() {
+      if (typeof ui.swatchModal.close === "function" && ui.swatchModal.open) {
+        ui.swatchModal.close();
+      } else {
+        ui.swatchModal.removeAttribute("open");
+      }
+      appState.selectedId = null;
+    }
+
+    function setAboutMenuOpen(open) {
+      ui.aboutMenu.hidden = !open;
+      ui.aboutBtn.setAttribute("aria-expanded", String(open));
+    }
+
+    ui.toggleUploadBtn.addEventListener("click", () => {
+      const nextOpen = ui.uploadDrawer.hidden;
+      ui.uploadDrawer.hidden = !nextOpen;
+      ui.toggleUploadBtn.setAttribute("aria-expanded", String(nextOpen));
+      syncPatVisibility();
+      if (nextOpen) {
+        if (!getSavedPat()) {
+          ui.ghPatInput.focus();
+        } else {
+          ui.paletteName.focus();
+        }
+      }
+    });
+
+    ui.clearPatBtn.addEventListener("click", () => {
+      clearPat();
+      ui.uploadStatus.textContent = "Saved token removed. Enter a token to publish to GitHub.";
+      ui.ghPatInput.focus();
+    });
+
+    ui.aboutBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setAboutMenuOpen(ui.aboutMenu.hidden);
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!ui.aboutMenu.hidden && !ui.aboutMenu.contains(event.target) && event.target !== ui.aboutBtn) {
+        setAboutMenuOpen(false);
+      }
+    });
+
+    ui.openProjectInfoBtn.addEventListener("click", () => {
+      setAboutMenuOpen(false);
+      if (typeof ui.projectModal.showModal === "function") {
+        ui.projectModal.showModal();
+      } else {
+        ui.projectModal.setAttribute("open", "");
+      }
+    });
+
+    ui.closeProjectModalBtn.addEventListener("click", () => {
+      if (typeof ui.projectModal.close === "function" && ui.projectModal.open) {
+        ui.projectModal.close();
+      } else {
+        ui.projectModal.removeAttribute("open");
+      }
+    });
+
+    ui.projectModal.addEventListener("click", (event) => {
+      if (event.target === ui.projectModal) {
+        ui.closeProjectModalBtn.click();
+      }
+    });
+
+    ui.uploadForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      ui.uploadStatus.textContent = "";
+
+      const token = getSavedPat() || ui.ghPatInput.value.trim();
+      const file = ui.svgFile.files && ui.svgFile.files[0];
+      const name = ui.paletteName.value.trim();
+
+      if (!token) {
+        ui.uploadStatus.textContent = "Enter your GitHub Personal Access Token first.";
+        ui.ghPatInput.focus();
+        return;
+      }
+
+      if (!file) {
+        ui.uploadStatus.textContent = "Choose an .svg file first.";
+        ui.svgFile.focus();
+        return;
+      }
+
+      if (!name) {
+        ui.uploadStatus.textContent = "Enter a palette name first.";
+        ui.paletteName.focus();
+        return;
+      }
+
+      const content = await file.text();
+      const { ok } = parseSvg(content);
+      if (!ok) {
+        ui.uploadStatus.textContent = "Invalid SVG file.";
+        return;
+      }
+
+      const newItem = {
+        id: `${toSlugFilename(name)}-${Date.now().toString(36)}`,
+        name,
+        filename: toSlugFilename(name),
+        svg: content,
+      };
+
+      ui.submitUploadBtn.disabled = true;
+      ui.uploadStatus.textContent = "Committing to GitHub...";
+
+      try {
+        const updatedList = await commitPaletteToGitHub(newItem, token);
+        savePat(token);
+        appState.items = updatedList;
+        renderStrips();
+        ui.svgFile.value = "";
+        ui.paletteName.value = "";
+        ui.uploadStatus.textContent = `Published "${name}" to GitHub (Pages refreshes in ~30–60s).`;
+      } catch (err) {
+        ui.uploadStatus.textContent = `GitHub error: ${err.message}`;
+      } finally {
+        ui.submitUploadBtn.disabled = false;
+      }
+    });
+
+    ui.closeSwatchModalBtn.addEventListener("click", closeSwatchModal);
+
+    ui.swatchModal.addEventListener("click", (event) => {
+      if (event.target === ui.swatchModal) {
+        closeSwatchModal();
+      }
+    });
+
+    ui.modalDownloadBtn.addEventListener("click", () => {
+      const item = appState.items.find((entry) => entry.id === appState.selectedId);
+      if (!item) return;
+      triggerDownload(item);
+      ui.swatchModalStatus.textContent = `Downloaded ${item.filename}`;
+    });
+
+    ui.modalCopyHexesBtn.addEventListener("click", async () => {
+      const item = appState.items.find((entry) => entry.id === appState.selectedId);
+      if (!item) return;
+      const hexText = extractHexLines(item.svg);
+      if (!hexText) {
+        ui.swatchModalStatus.textContent = "No hex colors found in SVG.";
+        return;
+      }
+      const ok = await copyToClipboard(hexText);
+      ui.swatchModalStatus.textContent = ok ? "Copied hexes (one per line)." : "Clipboard copy failed.";
+    });
+
+    ui.modalCopyPromptBtn.addEventListener("click", async () => {
+      const item = appState.items.find((entry) => entry.id === appState.selectedId);
+      if (!item) return;
+      const prompt = fishOutPrompt(item.svg);
+      if (!prompt) {
+        ui.swatchModalStatus.textContent = "No prompt class or ID found in SVG.";
+        return;
+      }
+      const ok = await copyToClipboard(prompt);
+      ui.swatchModalStatus.textContent = ok ? "Copied prompt." : "Clipboard copy failed.";
+    });
+
+    syncPatVisibility();
+    loadPalettesFromRepo();
+  </script>
+</body>
+</html>
