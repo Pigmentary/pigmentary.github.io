@@ -18,6 +18,8 @@
       --muted: #5b616e;
       --accent: #254edb;
       --accent-hover: #1b3cb0;
+      --danger: #b42318;
+      --danger-hover: #912018;
       --line: #d5d9e2;
       --radius-sm: 6px;
       --radius-md: 10px;
@@ -29,6 +31,11 @@
     *::before,
     *::after {
       box-sizing: border-box;
+    }
+
+    /* Guarantee [hidden] always overrides component display rules */
+    [hidden] {
+      display: none !important;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -118,10 +125,10 @@
       line-height: 1.2;
       text-decoration: none;
       cursor: pointer;
-      transition: background-color 130ms ease, border-color 130ms ease;
+      transition: background-color 130ms ease, border-color 130ms ease, color 130ms ease;
     }
 
-    .btn:hover {
+    .btn:hover:not(:disabled) {
       background-color: #f4f6fa;
       border-color: #b8c0d0;
     }
@@ -143,25 +150,21 @@
       color: #ffffff;
     }
 
+    .btn-danger {
+      background-color: var(--danger);
+      border-color: var(--danger);
+      color: #ffffff;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background-color: var(--danger-hover);
+      border-color: var(--danger-hover);
+      color: #ffffff;
+    }
+
     .btn-compact {
       padding: 5px 9px;
       font-size: 0.78rem;
-    }
-
-    .link-btn {
-      border: 0;
-      background: none;
-      padding: 0;
-      font: inherit;
-      font-size: 0.8rem;
-      color: var(--muted);
-      text-decoration: underline;
-      text-underline-offset: 2px;
-      cursor: pointer;
-    }
-
-    .link-btn:hover {
-      color: var(--ink);
     }
 
     /* About Menu */
@@ -179,10 +182,6 @@
       display: flex;
       flex-direction: column;
       gap: 2px;
-    }
-
-    .about-menu[hidden] {
-      display: none;
     }
 
     .about-item {
@@ -207,75 +206,6 @@
       color: var(--accent);
     }
 
-    /* Upload Drawer */
-    .upload-drawer {
-      margin-top: 18px;
-      padding: 16px 18px;
-      background-color: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-md);
-    }
-
-    .upload-drawer[hidden] {
-      display: none;
-    }
-
-    .upload-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) auto;
-      gap: 12px;
-      align-items: end;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .field[hidden] {
-      display: none;
-    }
-
-    .field label {
-      font-size: 0.8rem;
-      font-weight: 500;
-      color: var(--muted);
-    }
-
-    .field input[type="text"],
-    .field input[type="password"],
-    .field input[type="file"] {
-      width: 100%;
-      padding: 8px 10px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--line);
-      background-color: #fafbfd;
-      color: var(--ink);
-      font-family: var(--font-sans);
-      font-size: 0.86rem;
-    }
-
-    .field input[type="file"] {
-      padding: 6px 8px;
-    }
-
-    .upload-footer {
-      margin-top: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      min-height: 1.3em;
-    }
-
-    .upload-status {
-      margin: 0;
-      font-size: 0.82rem;
-      color: var(--muted);
-    }
-
     /* 2-Column Scroll Strip Feed */
     .feed-section {
       margin-top: 22px;
@@ -288,6 +218,7 @@
     }
 
     .strip-card {
+      position: relative;
       background-color: var(--surface);
       border: 1px solid var(--line);
       border-radius: var(--radius-md);
@@ -359,7 +290,7 @@
 
     /* Dialogs */
     dialog.modal {
-      width: min(700px, calc(100vw - 28px));
+      width: min(680px, calc(100vw - 28px));
       max-width: none;
       margin: auto;
       padding: 22px;
@@ -368,6 +299,10 @@
       background-color: var(--surface);
       color: var(--ink);
       box-shadow: 0 24px 60px rgba(17, 19, 24, 0.2);
+    }
+
+    dialog.modal.modal-narrow {
+      width: min(480px, calc(100vw - 28px));
     }
 
     dialog.modal::backdrop {
@@ -425,7 +360,57 @@
     .modal-status {
       font-size: 0.82rem;
       color: var(--muted);
-      margin-left: 4px;
+      margin-top: 10px;
+      min-height: 1.25em;
+    }
+
+    /* Admin Modal Forms */
+    .admin-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .admin-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      background-color: #f4f6fa;
+      border: 1px solid var(--line);
+      font-size: 0.84rem;
+      color: var(--ink);
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field label {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .field input[type="text"],
+    .field input[type="password"],
+    .field input[type="file"] {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background-color: #fafbfd;
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+    }
+
+    .field input[type="file"] {
+      padding: 7px 9px;
     }
 
     .info-body {
@@ -443,10 +428,6 @@
 
     @media (max-width: 860px) {
       .strip-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .upload-row {
         grid-template-columns: 1fr;
       }
     }
@@ -480,9 +461,7 @@
         >
           Generate your own
         </a>
-        <button type="button" class="btn" id="toggleUploadBtn" aria-expanded="false" aria-controls="uploadDrawer">
-          Add SVG
-        </button>
+        <button type="button" class="btn" id="openAdminBtn">Admin</button>
         <button type="button" class="btn" id="aboutBtn" aria-expanded="false" aria-controls="aboutMenu">
           About
         </button>
@@ -502,40 +481,60 @@
       </div>
     </header>
 
-    <section class="upload-drawer" id="uploadDrawer" aria-label="Upload SVG palette" hidden>
-      <form id="uploadForm" autocomplete="on" novalidate>
-        <div class="upload-row">
-          <div class="field" id="patField">
-            <label for="ghPatInput">GitHub Personal Access Token</label>
-            <input
-              id="ghPatInput"
-              name="password"
-              type="password"
-              autocomplete="current-password"
-              placeholder="github_pat_..."
-            />
-          </div>
-          <div class="field">
-            <label for="svgFile">SVG file</label>
-            <input id="svgFile" name="svgFile" type="file" accept=".svg,image/svg+xml" required />
-          </div>
-          <div class="field">
-            <label for="paletteName">Palette name</label>
-            <input id="paletteName" name="paletteName" type="text" placeholder="Sunset Over Santorini" required />
-          </div>
-          <button type="submit" class="btn btn-primary" id="submitUploadBtn">Add to list</button>
-        </div>
-        <div class="upload-footer">
-          <p class="upload-status" id="uploadStatus" role="status" aria-live="polite"></p>
-          <button type="button" class="link-btn" id="clearPatBtn" hidden>Clear saved token</button>
-        </div>
-      </form>
-    </section>
-
     <main class="feed-section" aria-label="SVG color strip list">
       <div class="strip-grid" id="stripGrid"></div>
     </main>
   </div>
+
+  <!-- Admin Popup Modal -->
+  <dialog class="modal modal-narrow" id="adminModal" aria-labelledby="adminModalTitle">
+    <div class="modal-head">
+      <h2 class="modal-title" id="adminModalTitle">Admin</h2>
+      <button type="button" class="btn btn-compact" id="closeAdminModalBtn">Close</button>
+    </div>
+
+    <!-- State 1: No PAT in memory -->
+    <form id="patSetupForm" class="admin-stack" autocomplete="on" novalidate>
+      <div class="field">
+        <label for="ghPatInput">GitHub Personal Access Token</label>
+        <input
+          id="ghPatInput"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          placeholder="github_pat_..."
+          required
+        />
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary" id="savePatBtn">Submit to memory</button>
+      </div>
+    </form>
+
+    <!-- State 2: PAT is in memory -->
+    <div id="adminActiveView" class="admin-stack" hidden>
+      <div class="admin-bar">
+        <span>PAT saved in browser memory</span>
+        <button type="button" class="btn btn-compact" id="forgetPatBtn">Forget PAT</button>
+      </div>
+
+      <form id="paletteUploadForm" class="admin-stack" novalidate>
+        <div class="field">
+          <label for="svgFile">SVG file</label>
+          <input id="svgFile" name="svgFile" type="file" accept=".svg,image/svg+xml" required />
+        </div>
+        <div class="field">
+          <label for="paletteName">Palette name</label>
+          <input id="paletteName" name="paletteName" type="text" placeholder="Sunset Over Santorini" required />
+        </div>
+        <div>
+          <button type="submit" class="btn btn-primary" id="submitPaletteBtn">Submit palette</button>
+        </div>
+      </form>
+    </div>
+
+    <p class="modal-status" id="adminStatus" role="status" aria-live="polite"></p>
+  </dialog>
 
   <!-- Swatch Popup Modal -->
   <dialog class="modal" id="swatchModal" aria-labelledby="swatchModalTitle">
@@ -549,8 +548,9 @@
       <button type="button" class="btn btn-primary btn-compact" id="modalDownloadBtn">Download SVG</button>
       <button type="button" class="btn btn-compact" id="modalCopyHexesBtn">Copy hexes</button>
       <button type="button" class="btn btn-compact" id="modalCopyPromptBtn">Copy prompt</button>
-      <span class="modal-status" id="swatchModalStatus" role="status" aria-live="polite"></span>
+      <button type="button" class="btn btn-danger btn-compact" id="modalDeleteBtn" hidden>Delete</button>
     </div>
+    <p class="modal-status" id="swatchModalStatus" role="status" aria-live="polite"></p>
   </dialog>
 
   <!-- Project Info Popup Modal -->
@@ -572,19 +572,18 @@
       >
         Gemini palette app
       </a>
-      , download the SVG, and upload it here.
+      , download the SVG, and upload it via Admin.
     </p>
   </dialog>
 
   <script>
-    // Set REPO_NAME to match your GitHub repository name before uploading index.html
     const GITHUB_CONFIG = {
-  owner: "Pigmentary",
-  repo: "pigmentary.github.io",
-  branch: "main",
-  dataPath: "palettes.json",
-  storageKey: "pigmentary_gh_pat",
-};
+      owner: "Pigmentary",
+      repo: "pigmentary.github.io",
+      branch: "main",
+      dataPath: "palettes.json",
+      storageKey: "pigmentary_gh_pat",
+    };
 
     const INITIAL_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 450" width="1000" height="450" role="img" aria-label="Sunset Over Santorini">
   <metadata id="prompt-text" class="svg-prompt" data-prompt="sunset over santorini">sunset over santorini</metadata>
@@ -611,16 +610,18 @@
     };
 
     const ui = {
-      toggleUploadBtn: document.getElementById("toggleUploadBtn"),
-      uploadDrawer: document.getElementById("uploadDrawer"),
-      uploadForm: document.getElementById("uploadForm"),
-      patField: document.getElementById("patField"),
+      openAdminBtn: document.getElementById("openAdminBtn"),
+      adminModal: document.getElementById("adminModal"),
+      closeAdminModalBtn: document.getElementById("closeAdminModalBtn"),
+      patSetupForm: document.getElementById("patSetupForm"),
       ghPatInput: document.getElementById("ghPatInput"),
-      clearPatBtn: document.getElementById("clearPatBtn"),
+      adminActiveView: document.getElementById("adminActiveView"),
+      forgetPatBtn: document.getElementById("forgetPatBtn"),
+      paletteUploadForm: document.getElementById("paletteUploadForm"),
       svgFile: document.getElementById("svgFile"),
       paletteName: document.getElementById("paletteName"),
-      submitUploadBtn: document.getElementById("submitUploadBtn"),
-      uploadStatus: document.getElementById("uploadStatus"),
+      submitPaletteBtn: document.getElementById("submitPaletteBtn"),
+      adminStatus: document.getElementById("adminStatus"),
       aboutBtn: document.getElementById("aboutBtn"),
       aboutMenu: document.getElementById("aboutMenu"),
       openProjectInfoBtn: document.getElementById("openProjectInfoBtn"),
@@ -634,29 +635,45 @@
       modalDownloadBtn: document.getElementById("modalDownloadBtn"),
       modalCopyHexesBtn: document.getElementById("modalCopyHexesBtn"),
       modalCopyPromptBtn: document.getElementById("modalCopyPromptBtn"),
+      modalDeleteBtn: document.getElementById("modalDeleteBtn"),
       projectModal: document.getElementById("projectModal"),
       closeProjectModalBtn: document.getElementById("closeProjectModalBtn"),
     };
 
     function getSavedPat() {
-      return (localStorage.getItem(GITHUB_CONFIG.storageKey) || "").trim();
+      try {
+        const val = localStorage.getItem(GITHUB_CONFIG.storageKey);
+        return typeof val === "string" && val.trim().length > 0 ? val.trim() : "";
+      } catch (_) {
+        return "";
+      }
     }
 
-    function savePat(token) {
+    function hasPatInMemory() {
+      return getSavedPat().length > 0;
+    }
+
+    function setPatInMemory(token) {
       localStorage.setItem(GITHUB_CONFIG.storageKey, token.trim());
-      syncPatVisibility();
+      syncAuthViews();
     }
 
-    function clearPat() {
+    function forgetPatFromMemory() {
       localStorage.removeItem(GITHUB_CONFIG.storageKey);
       ui.ghPatInput.value = "";
-      syncPatVisibility();
+      syncAuthViews();
     }
 
-    function syncPatVisibility() {
-      const hasToken = Boolean(getSavedPat());
-      ui.patField.hidden = hasToken;
-      ui.clearPatBtn.hidden = !hasToken;
+    function syncAuthViews() {
+      const authenticated = hasPatInMemory();
+      ui.patSetupForm.hidden = authenticated;
+      ui.adminActiveView.hidden = !authenticated;
+
+      if (!authenticated) {
+        ui.modalDeleteBtn.hidden = true;
+      } else if (appState.selectedId) {
+        ui.modalDeleteBtn.hidden = false;
+      }
     }
 
     function parseSvg(svgMarkup) {
@@ -743,20 +760,20 @@
         const res = await fetch(rawUrl, { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data)) {
             appState.items = data;
             renderStrips();
             return;
           }
         }
       } catch (_) {
-        // Fall back to local/starter items if offline or not yet created
+        // Fall back to starter swatch if offline or not yet created
       }
       appState.items = [...FALLBACK_ITEMS];
       renderStrips();
     }
 
-    async function commitPaletteToGitHub(newItem, token) {
+    async function updatePalettesOnGitHub(mutateList, commitMessage, token) {
       const apiUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.dataPath}`;
       const headers = {
         Authorization: `Bearer ${token}`,
@@ -767,7 +784,6 @@
       let existingSha = null;
       let existingList = [];
 
-      // Cache-bust the GET so GitHub always returns the latest file SHA
       const getRes = await fetch(
         `${apiUrl}?ref=${encodeURIComponent(GITHUB_CONFIG.branch)}&t=${Date.now()}`,
         { headers, cache: "no-store" }
@@ -789,9 +805,9 @@
         throw new Error(errBody.message || `GitHub API error (${getRes.status})`);
       }
 
-      const updatedList = [newItem, ...existingList];
+      const updatedList = mutateList(existingList);
       const payload = {
-        message: `Add palette: ${newItem.name}`,
+        message: commitMessage,
         content: encodeUtf8Base64(JSON.stringify(updatedList, null, 2)),
         branch: GITHUB_CONFIG.branch,
       };
@@ -872,7 +888,7 @@
       if (appState.items.length === 0) {
         const empty = document.createElement("div");
         empty.className = "empty-box";
-        empty.textContent = "No SVGs added yet. Click Add SVG above to upload your first palette.";
+        empty.textContent = "No SVGs added yet. Open Admin to add your first palette.";
         ui.stripGrid.appendChild(empty);
         return;
       }
@@ -940,6 +956,29 @@
       }
     }
 
+    function openAdminModal() {
+      ui.adminStatus.textContent = "";
+      syncAuthViews();
+      if (typeof ui.adminModal.showModal === "function") {
+        ui.adminModal.showModal();
+      } else {
+        ui.adminModal.setAttribute("open", "");
+      }
+      if (!hasPatInMemory()) {
+        ui.ghPatInput.focus();
+      } else {
+        ui.paletteName.focus();
+      }
+    }
+
+    function closeAdminModal() {
+      if (typeof ui.adminModal.close === "function" && ui.adminModal.open) {
+        ui.adminModal.close();
+      } else {
+        ui.adminModal.removeAttribute("open");
+      }
+    }
+
     function openSwatchModal(id) {
       const item = appState.items.find((entry) => entry.id === id);
       if (!item) return;
@@ -947,6 +986,13 @@
       appState.selectedId = item.id;
       ui.swatchModalTitle.textContent = item.name;
       ui.swatchModalStatus.textContent = "";
+
+      // Show Delete button strictly when PAT exists in browser memory
+      const canDelete = hasPatInMemory();
+      ui.modalDeleteBtn.hidden = !canDelete;
+      ui.modalDeleteBtn.disabled = false;
+      ui.modalDeleteBtn.textContent = "Delete";
+
       renderSvgInto(ui.swatchModalPreview, item.svg);
 
       const hexLines = extractHexLines(item.svg);
@@ -977,26 +1023,95 @@
       ui.aboutBtn.setAttribute("aria-expanded", String(open));
     }
 
-    ui.toggleUploadBtn.addEventListener("click", () => {
-      const nextOpen = ui.uploadDrawer.hidden;
-      ui.uploadDrawer.hidden = !nextOpen;
-      ui.toggleUploadBtn.setAttribute("aria-expanded", String(nextOpen));
-      syncPatVisibility();
-      if (nextOpen) {
-        if (!getSavedPat()) {
-          ui.ghPatInput.focus();
-        } else {
-          ui.paletteName.focus();
-        }
+    /* Admin Modal Events */
+    ui.openAdminBtn.addEventListener("click", openAdminModal);
+    ui.closeAdminModalBtn.addEventListener("click", closeAdminModal);
+
+    ui.adminModal.addEventListener("click", (event) => {
+      if (event.target === ui.adminModal) {
+        closeAdminModal();
       }
     });
 
-    ui.clearPatBtn.addEventListener("click", () => {
-      clearPat();
-      ui.uploadStatus.textContent = "Saved token removed. Enter a token to publish to GitHub.";
+    ui.patSetupForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const token = ui.ghPatInput.value.trim();
+      if (!token) {
+        ui.adminStatus.textContent = "Enter a GitHub Personal Access Token first.";
+        ui.ghPatInput.focus();
+        return;
+      }
+      setPatInMemory(token);
+      ui.adminStatus.textContent = "PAT saved to browser memory.";
+    });
+
+    ui.forgetPatBtn.addEventListener("click", () => {
+      forgetPatFromMemory();
+      ui.adminStatus.textContent = "PAT removed from browser memory.";
       ui.ghPatInput.focus();
     });
 
+    ui.paletteUploadForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      ui.adminStatus.textContent = "";
+
+      const token = getSavedPat();
+      if (!token) {
+        syncAuthViews();
+        ui.adminStatus.textContent = "Save your PAT to memory first.";
+        return;
+      }
+
+      const file = ui.svgFile.files && ui.svgFile.files[0];
+      const name = ui.paletteName.value.trim();
+
+      if (!file) {
+        ui.adminStatus.textContent = "Choose an .svg file first.";
+        ui.svgFile.focus();
+        return;
+      }
+
+      if (!name) {
+        ui.adminStatus.textContent = "Enter a palette name first.";
+        ui.paletteName.focus();
+        return;
+      }
+
+      const content = await file.text();
+      const { ok } = parseSvg(content);
+      if (!ok) {
+        ui.adminStatus.textContent = "Invalid SVG file.";
+        return;
+      }
+
+      const newItem = {
+        id: `${toSlugFilename(name)}-${Date.now().toString(36)}`,
+        name,
+        filename: toSlugFilename(name),
+        svg: content,
+      };
+
+      ui.submitPaletteBtn.disabled = true;
+      ui.adminStatus.textContent = "Committing to GitHub...";
+
+      try {
+        const updatedList = await updatePalettesOnGitHub(
+          (list) => [newItem, ...list],
+          `Add palette: ${newItem.name}`,
+          token
+        );
+        appState.items = updatedList;
+        renderStrips();
+        ui.paletteUploadForm.reset();
+        ui.adminStatus.textContent = `Published "${name}" to GitHub.`;
+      } catch (err) {
+        ui.adminStatus.textContent = `GitHub error: ${err.message}`;
+      } finally {
+        ui.submitPaletteBtn.disabled = false;
+      }
+    });
+
+    /* About & Project Info Events */
     ui.aboutBtn.addEventListener("click", (event) => {
       event.stopPropagation();
       setAboutMenuOpen(ui.aboutMenu.hidden);
@@ -1031,64 +1146,7 @@
       }
     });
 
-    ui.uploadForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      ui.uploadStatus.textContent = "";
-
-      const token = getSavedPat() || ui.ghPatInput.value.trim();
-      const file = ui.svgFile.files && ui.svgFile.files[0];
-      const name = ui.paletteName.value.trim();
-
-      if (!token) {
-        ui.uploadStatus.textContent = "Enter your GitHub Personal Access Token first.";
-        ui.ghPatInput.focus();
-        return;
-      }
-
-      if (!file) {
-        ui.uploadStatus.textContent = "Choose an .svg file first.";
-        ui.svgFile.focus();
-        return;
-      }
-
-      if (!name) {
-        ui.uploadStatus.textContent = "Enter a palette name first.";
-        ui.paletteName.focus();
-        return;
-      }
-
-      const content = await file.text();
-      const { ok } = parseSvg(content);
-      if (!ok) {
-        ui.uploadStatus.textContent = "Invalid SVG file.";
-        return;
-      }
-
-      const newItem = {
-        id: `${toSlugFilename(name)}-${Date.now().toString(36)}`,
-        name,
-        filename: toSlugFilename(name),
-        svg: content,
-      };
-
-      ui.submitUploadBtn.disabled = true;
-      ui.uploadStatus.textContent = "Committing to GitHub...";
-
-      try {
-        const updatedList = await commitPaletteToGitHub(newItem, token);
-        savePat(token);
-        appState.items = updatedList;
-        renderStrips();
-        ui.svgFile.value = "";
-        ui.paletteName.value = "";
-        ui.uploadStatus.textContent = `Published "${name}" to GitHub (Pages refreshes in ~30–60s).`;
-      } catch (err) {
-        ui.uploadStatus.textContent = `GitHub error: ${err.message}`;
-      } finally {
-        ui.submitUploadBtn.disabled = false;
-      }
-    });
-
+    /* Swatch Modal Events */
     ui.closeSwatchModalBtn.addEventListener("click", closeSwatchModal);
 
     ui.swatchModal.addEventListener("click", (event) => {
@@ -1128,7 +1186,41 @@
       ui.swatchModalStatus.textContent = ok ? "Copied prompt." : "Clipboard copy failed.";
     });
 
-    syncPatVisibility();
+    ui.modalDeleteBtn.addEventListener("click", async () => {
+      const token = getSavedPat();
+      if (!token) {
+        syncAuthViews();
+        return;
+      }
+
+      const item = appState.items.find((entry) => entry.id === appState.selectedId);
+      if (!item) return;
+
+      if (ui.modalDeleteBtn.textContent !== "Confirm delete") {
+        ui.modalDeleteBtn.textContent = "Confirm delete";
+        return;
+      }
+
+      ui.modalDeleteBtn.disabled = true;
+      ui.swatchModalStatus.textContent = "Deleting from GitHub...";
+
+      try {
+        const updatedList = await updatePalettesOnGitHub(
+          (list) => list.filter((entry) => entry.id !== item.id),
+          `Remove palette: ${item.name}`,
+          token
+        );
+        appState.items = updatedList;
+        renderStrips();
+        closeSwatchModal();
+      } catch (err) {
+        ui.swatchModalStatus.textContent = `Delete failed: ${err.message}`;
+        ui.modalDeleteBtn.disabled = false;
+        ui.modalDeleteBtn.textContent = "Delete";
+      }
+    });
+
+    syncAuthViews();
     loadPalettesFromRepo();
   </script>
 </body>
